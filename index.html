@@ -82,9 +82,10 @@
   .sas-link{font-family:'DM Mono',monospace;color:var(--accent2);font-size:12px}
   .tel-cell{font-family:'DM Mono',monospace;font-size:12px}
   .empty-state{color:var(--muted);text-align:center;padding:2.5rem;font-size:14px}
-  .tipo-select{appearance:none;-webkit-appearance:none;padding:4px 26px 4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;letter-spacing:0.5px}
-  .tipo-co{background-color:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3)}
-  .tipo-carga{background-color:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3)}
+  /* TIPO SELECT */
+  .tipo-select{appearance:none;-webkit-appearance:none;padding:4px 26px 4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;letter-spacing:0.5px;border:none;transition:background-color 0.15s,color 0.15s}
+  .tipo-co{background-color:rgba(96,165,250,0.15);color:#60a5fa;border:1px solid rgba(96,165,250,0.3)!important}
+  .tipo-carga{background-color:rgba(110,231,183,0.15);color:#6ee7b7;border:1px solid rgba(110,231,183,0.3)!important}
   .dias-chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;font-family:'DM Mono',monospace}
   .dias-hoy{background:rgba(110,231,183,0.12);color:var(--accent)}
   .dias-1{background:rgba(96,165,250,0.12);color:#60a5fa}
@@ -160,7 +161,7 @@
   <div class="tutorial-box fade-in">
     <div class="tut-step-label" id="tut-step-label">Paso 1 de 5</div>
     <div class="tut-title" id="tut-title">¡Bienvenido a Seguimiento!</div>
-    <div class="tut-desc" id="tut-desc">Tus datos ahora se guardan en Supabase — disponibles desde cualquier PC, cualquier navegador, sin depender de Claude.</div>
+    <div class="tut-desc" id="tut-desc">Tus datos se guardan en Supabase — disponibles desde cualquier PC y navegador.</div>
     <div class="tut-actions">
       <div class="tut-dots" id="tut-dots"></div>
       <div style="display:flex;gap:8px">
@@ -212,12 +213,10 @@
       <div class="stat-card"><div class="stat-label">Ventas</div><div class="stat-val" id="st-ventas" style="color:var(--success)">0</div></div>
       <div class="stat-card"><div class="stat-label">+3 días</div><div class="stat-val" id="st-viejos" style="color:var(--warning)">0</div></div>
     </div>
-
     <div class="alerta-dias" id="alerta-dias">
       <span style="font-size:18px">⚠️</span>
       <div class="alerta-dias-texto" id="alerta-dias-texto"></div>
     </div>
-
     <div id="notif-banner">
       <span>🔔</span>
       <span>Activá las notificaciones para recibir alertas cuando venza un recordatorio.</span>
@@ -250,13 +249,11 @@
       <div class="results-count" id="results-count"></div>
       <div class="table-wrap">
         <table>
-          <thead>
-            <tr>
-              <th>N° SAS</th><th>Teléfono</th><th>Nombre</th>
-              <th>Fecha</th><th>Estado</th><th>Días</th>
-              <th>Observación</th><th>Acciones</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>N° SAS</th><th>Teléfono</th><th>Nombre</th>
+            <th>Fecha</th><th>Estado</th><th>Días</th>
+            <th>Observación</th><th>Acciones</th>
+          </tr></thead>
           <tbody id="tabla-body"></tbody>
         </table>
       </div>
@@ -327,9 +324,13 @@
             <option value="day">días</option>
           </select>
         </div>
-        <label class="checkbox-label" style="padding-bottom:2px"><input type="checkbox" id="f-rem-on" checked> Activar</label>
+        <label class="checkbox-label" style="padding-bottom:2px">
+          <input type="checkbox" id="f-rem-on" checked> Activar
+        </label>
       </div>
-      <div style="font-size:12px;color:var(--muted);margin-top:10px">Saltará en <strong id="rem-preview-txt" style="color:var(--accent)">30 minutos</strong> desde que guardés.</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:10px">
+        Saltará en <strong id="rem-preview-txt" style="color:var(--accent)">30 minutos</strong> desde que guardés.
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
@@ -339,270 +340,464 @@
 </div>
 
 <script>
-// ===== SUPABASE =====
+// ================================================================
+// SUPABASE — columnas: id, created_at, sas, tel, nombre, tipo,
+//            estado, fecha, obs, rem_on, rem_at
+// TODAS en minúscula. No cambiar.
+// ================================================================
 const SUPABASE_URL = 'https://jboeestsmzihudpucmpe.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impib2Vlc3RzbXppaHVkcHVjbXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNzIxMjQsImV4cCI6MjA5Mjk0ODEyNH0.32xEx1EI-z8HCLHchnFBXa0Tj5G5oxZVm7Qm47C4Hx0';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function setSyncStatus(s){
-  const dot=document.getElementById('sync-dot'),txt=document.getElementById('sync-txt');
-  dot.className='sync-dot '+s;
-  txt.textContent=s==='ok'?'Guardado':s==='saving'?'Guardando...':'Error de conexión';
+// ================================================================
+// ESTADO GLOBAL
+// ================================================================
+let contactos = [];  // cada item tiene: {id, sas, tel, nombre, tipo, estado, fecha, obs, rem_on, rem_at}
+let editIdx = -1;
+let editId = null;
+let disparados = new Set();
+
+// ================================================================
+// SYNC STATUS
+// ================================================================
+function setSyncStatus(s) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + s;
+  document.getElementById('sync-txt').textContent =
+    s === 'ok' ? 'Guardado' : s === 'saving' ? 'Guardando...' : 'Error de conexión';
 }
 
-const ESTADOS_CSS={'ANALISIS DE BACK OFFICE':'b-backoffice','RIESGOS CREDITICIOS':'b-riesgos','JEFE COMERCIAL':'b-jefe','STAFF LEGALES':'b-legales','ADJUNTAR DOCS ASEG.':'b-adjuntar','CONFIRMAR':'b-confirmar','DEV BACK OFFICE':'b-devbo','RECHAZADO':'b-rechazado','VENTA':'b-venta','DEV RIESGOS CREDITICIO':'b-devriesgos','DEV STAFF LEGALES':'b-devlegales'};
+// ================================================================
+// HELPERS
+// ================================================================
+const ESTADOS_CSS = {
+  'ANALISIS DE BACK OFFICE':'b-backoffice','RIESGOS CREDITICIOS':'b-riesgos',
+  'JEFE COMERCIAL':'b-jefe','STAFF LEGALES':'b-legales',
+  'ADJUNTAR DOCS ASEG.':'b-adjuntar','CONFIRMAR':'b-confirmar',
+  'DEV BACK OFFICE':'b-devbo','RECHAZADO':'b-rechazado','VENTA':'b-venta',
+  'DEV RIESGOS CREDITICIO':'b-devriesgos','DEV STAFF LEGALES':'b-devlegales'
+};
 
-let contactos=[],editIdx=-1,editId=null,disparados=new Set();
-
-function badge(e){if(!e)return`<span class="badge b-none">Sin estado</span>`;return`<span class="badge ${ESTADOS_CSS[e]||'b-none'}">${e}</span>`;}
-function hoy(){const d=new Date();d.setHours(0,0,0,0);return d;}
-function diasDesde(f){if(!f)return null;return Math.round((hoy()-new Date(f+'T00:00:00'))/86400000);}
-function etiquetaDias(n){
-  if(n===null)return{txt:'Sin fecha',cls:'dias-2'};
-  if(n<0)return{txt:'Futuro',cls:'dias-hoy'};
-  if(n===0)return{txt:'Hoy',cls:'dias-hoy'};
-  if(n===1)return{txt:'Ayer',cls:'dias-1'};
-  if(n===2)return{txt:'Hace 2 días',cls:'dias-2'};
-  if(n===3)return{txt:'Hace 3 días',cls:'dias-3'};
-  return{txt:`Hace ${n} días`,cls:'dias-viejo'};
+function badge(estado) {
+  if (!estado) return `<span class="badge b-none">Sin estado</span>`;
+  return `<span class="badge ${ESTADOS_CSS[estado] || 'b-none'}">${estado}</span>`;
 }
 
-function tipoSelect(tipo,i){
-  const t=tipo==='CARGA'?'CARGA':'CO';
-  const cls=t==='CARGA'?'tipo-carga':'tipo-co';
-  return `<select class="tipo-select ${cls}" onchange="cambiarTipo(${i},this.value);this.className='tipo-select '+(this.value==='CARGA'?'tipo-carga':'tipo-co')">
-    <option value="CO" ${t==='CO'?'selected':''}>CO</option>
-    <option value="CARGA" ${t==='CARGA'?'selected':''}>CARGA</option>
+function hoy() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+
+function diasDesde(fecha) {
+  if (!fecha) return null;
+  return Math.round((hoy() - new Date(fecha + 'T00:00:00')) / 86400000);
+}
+
+function etiquetaDias(n) {
+  if (n === null) return { txt: 'Sin fecha', cls: 'dias-2' };
+  if (n < 0)  return { txt: 'Futuro',    cls: 'dias-hoy' };
+  if (n === 0) return { txt: 'Hoy',       cls: 'dias-hoy' };
+  if (n === 1) return { txt: 'Ayer',      cls: 'dias-1' };
+  if (n === 2) return { txt: 'Hace 2 días', cls: 'dias-2' };
+  if (n === 3) return { txt: 'Hace 3 días', cls: 'dias-3' };
+  return { txt: `Hace ${n} días`, cls: 'dias-viejo' };
+}
+
+function tipoSelectHTML(tipo, idx) {
+  const val = tipo === 'CARGA' ? 'CARGA' : 'CO';
+  const cls = val === 'CARGA' ? 'tipo-carga' : 'tipo-co';
+  return `<select class="tipo-select ${cls}"
+    onchange="cambiarTipo(${idx}, this.value); this.className='tipo-select '+(this.value==='CARGA'?'tipo-carga':'tipo-co')">
+    <option value="CO"    ${val === 'CO'    ? 'selected' : ''}>CO</option>
+    <option value="CARGA" ${val === 'CARGA' ? 'selected' : ''}>CARGA</option>
   </select>`;
 }
 
-async function cambiarTipo(i,v){
-  contactos[i].TIPO=v;
+// ================================================================
+// CAMBIAR TIPO DESDE LA TABLA
+// ================================================================
+async function cambiarTipo(idx, valor) {
+  contactos[idx].tipo = valor;   // actualizar en memoria primero
   setSyncStatus('saving');
-  await sb.from('contactos').update({TIPO:v}).eq('id',contactos[i].id);
-  setSyncStatus('ok');
-  renderTabla();renderStats();
+  const { error } = await sb.from('contactos').update({ tipo: valor }).eq('id', contactos[idx].id);
+  setSyncStatus(error ? 'error' : 'ok');
+  renderStats();  // solo stats, no re-renderizar tabla (evita reset visual)
 }
 
-// ===== RENDER =====
-function renderTabla(){
-  const buscar=document.getElementById('buscar').value.toLowerCase();
-  const fTipo=document.getElementById('filtro-tipo').value;
-  const fEstado=document.getElementById('filtro-estado').value;
-  const fDias=document.getElementById('filtro-dias').value;
-  const filtered=contactos.filter(c=>{
-    const mb=!buscar||(c.SAS+'').toLowerCase().includes(buscar)||(c.TEL+'').includes(buscar)||(c.NOM||'').toLowerCase().includes(buscar);
-    const mt=!fTipo||(c.TIPO||'CO')===fTipo;
-    const me=!fEstado||c.ESTADO===fEstado;
-    const d=diasDesde(c.FECHA);
-    let md=true;
-    if(fDias==='0')md=d===0;
-    else if(fDias==='1')md=d===1;
-    else if(fDias==='2')md=d===2;
-    else if(fDias==='3')md=d!==null&&d>=3;
-    return mb&&mt&&me&&md;
+// ================================================================
+// RENDER TABLA
+// ================================================================
+function renderTabla() {
+  const buscar   = document.getElementById('buscar').value.toLowerCase();
+  const fTipo    = document.getElementById('filtro-tipo').value;
+  const fEstado  = document.getElementById('filtro-estado').value;
+  const fDias    = document.getElementById('filtro-dias').value;
+
+  const filtered = contactos.filter(c => {
+    const mb = !buscar  || (c.sas+'').toLowerCase().includes(buscar)
+                        || (c.tel+'').includes(buscar)
+                        || (c.nombre||'').toLowerCase().includes(buscar);
+    const mt = !fTipo   || (c.tipo || 'CO') === fTipo;
+    const me = !fEstado || c.estado === fEstado;
+    const d  = diasDesde(c.fecha);
+    let md = true;
+    if (fDias === '0') md = d === 0;
+    else if (fDias === '1') md = d === 1;
+    else if (fDias === '2') md = d === 2;
+    else if (fDias === '3') md = d !== null && d >= 3;
+    return mb && mt && me && md;
   });
-  const rc=document.getElementById('results-count');
-  rc.innerHTML=filtered.length!==contactos.length?`Mostrando <strong>${filtered.length}</strong> de <strong>${contactos.length}</strong> contactos`:`<strong>${contactos.length}</strong> contacto${contactos.length!==1?'s':''}`;
-  const tb=document.getElementById('tabla-body');
-  if(!filtered.length){tb.innerHTML=`<tr><td colspan="8" class="empty-state">${contactos.length?'Sin resultados para esos filtros.':'Ningún contacto todavía. Hacé clic en "+ Nuevo contacto".'}</td></tr>`;return;}
-  tb.innerHTML=filtered.map(c=>{
-    const i=contactos.indexOf(c),d=diasDesde(c.FECHA),et=etiquetaDias(d);
-    const fFmt=c.FECHA?new Date(c.FECHA+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-    const obs=(c.OBS||'').length>28?(c.OBS.slice(0,28)+'…'):c.OBS||'—';
+
+  const rc = document.getElementById('results-count');
+  rc.innerHTML = filtered.length !== contactos.length
+    ? `Mostrando <strong>${filtered.length}</strong> de <strong>${contactos.length}</strong> contactos`
+    : `<strong>${contactos.length}</strong> contacto${contactos.length !== 1 ? 's' : ''}`;
+
+  const tb = document.getElementById('tabla-body');
+  if (!filtered.length) {
+    tb.innerHTML = `<tr><td colspan="8" class="empty-state">${
+      contactos.length ? 'Sin resultados para esos filtros.' : 'Ningún contacto todavía. Hacé clic en "+ Nuevo contacto".'
+    }</td></tr>`;
+    return;
+  }
+
+  tb.innerHTML = filtered.map(c => {
+    const idx  = contactos.indexOf(c);
+    const d    = diasDesde(c.fecha);
+    const et   = etiquetaDias(d);
+    const fFmt = c.fecha
+      ? new Date(c.fecha + 'T00:00:00').toLocaleDateString('es-PY', { day:'2-digit', month:'2-digit', year:'numeric' })
+      : '—';
+    const obs  = (c.obs||'').length > 28 ? (c.obs.slice(0,28) + '…') : (c.obs || '—');
+
     return `<tr class="fade-in">
-      <td><div class="sas-cell">${tipoSelect(c.TIPO,i)}<span class="sas-link">#${c.SAS}</span></div></td>
-      <td><span class="tel-cell">${c.TEL}</span></td>
-      <td>${c.NOM||'—'}</td>
+      <td><div class="sas-cell">${tipoSelectHTML(c.tipo, idx)}<span class="sas-link">#${c.sas}</span></div></td>
+      <td><span class="tel-cell">${c.tel}</span></td>
+      <td>${c.nombre || '—'}</td>
       <td style="font-size:12px;color:var(--muted)">${fFmt}</td>
-      <td>${badge(c.ESTADO)}</td>
+      <td>${badge(c.estado)}</td>
       <td><span class="dias-chip ${et.cls}">${et.txt}</span></td>
-      <td style="font-size:12px;color:var(--muted)" title="${c.OBS||''}">${obs}</td>
+      <td style="font-size:12px;color:var(--muted)" title="${c.obs||''}">${obs}</td>
       <td style="display:flex;gap:5px">
-        <button class="action-btn" onclick="abrirModal(${i})">Editar</button>
-        <button class="action-btn del" onclick="eliminar(${i})">×</button>
+        <button class="action-btn" onclick="abrirModal(${idx})">Editar</button>
+        <button class="action-btn del" onclick="eliminar(${idx})">×</button>
       </td>
     </tr>`;
   }).join('');
 }
 
-function renderRecordatorios(){
-  const ahora=Date.now();
-  const activos=contactos.filter(c=>c.REM_ON&&c.REM_AT).sort((a,b)=>a.rem_at-b.rem_at);
-  const vencidos=activos.filter(c=>c.REM_AT<=ahora);
-  vencidos.forEach(c=>{const key=c.SAS+'_'+c.REM_AT;if(!disparados.has(key)){disparados.add(key);dispararNotificacion(c);}});
-  const badgeEl=document.getElementById('rem-badge');
-  vencidos.length>0?(badgeEl.textContent=vencidos.length,badgeEl.classList.remove('hidden')):badgeEl.classList.add('hidden');
-  const lista=document.getElementById('lista-rem');
-  if(!activos.length){lista.innerHTML=`<div class="empty-state" style="padding:3rem">No hay recordatorios activos.</div>`;return;}
-  lista.innerHTML=activos.map(c=>{
-    const i=contactos.indexOf(c),diff=c.REM_AT-ahora,venc=diff<=0;
-    const abs=Math.abs(diff),mins=Math.floor(abs/60000),hrs=Math.floor(mins/60),minR=mins%60,secs=Math.floor((abs%60000)/1000);
-    const txt=venc?'¡AHORA!':(hrs>0?`${hrs}h ${minR}m`:(mins>0?`${mins}m ${secs}s`:`${secs}s`));
-    return `<div class="rem-card${venc?' disparado':''} fade-in">
-      <div class="rem-timer${venc?' disparado':''}">${txt}</div>
+// ================================================================
+// RENDER RECORDATORIOS
+// ================================================================
+function renderRecordatorios() {
+  const ahora  = Date.now();
+  const activos = contactos.filter(c => c.rem_on && c.rem_at).sort((a,b) => a.rem_at - b.rem_at);
+  const vencidos = activos.filter(c => c.rem_at <= ahora);
+
+  vencidos.forEach(c => {
+    const key = c.sas + '_' + c.rem_at;
+    if (!disparados.has(key)) { disparados.add(key); dispararNotificacion(c); }
+  });
+
+  const badgeEl = document.getElementById('rem-badge');
+  if (vencidos.length > 0) { badgeEl.textContent = vencidos.length; badgeEl.classList.remove('hidden'); }
+  else badgeEl.classList.add('hidden');
+
+  const lista = document.getElementById('lista-rem');
+  if (!activos.length) {
+    lista.innerHTML = `<div class="empty-state" style="padding:3rem">No hay recordatorios activos.</div>`;
+    return;
+  }
+
+  lista.innerHTML = activos.map(c => {
+    const idx  = contactos.indexOf(c);
+    const diff = c.rem_at - ahora;
+    const venc = diff <= 0;
+    const abs  = Math.abs(diff);
+    const mins = Math.floor(abs / 60000);
+    const hrs  = Math.floor(mins / 60);
+    const minR = mins % 60;
+    const secs = Math.floor((abs % 60000) / 1000);
+    const txt  = venc ? '¡AHORA!' : (hrs > 0 ? `${hrs}h ${minR}m` : (mins > 0 ? `${mins}m ${secs}s` : `${secs}s`));
+
+    return `<div class="rem-card${venc ? ' disparado' : ''} fade-in">
+      <div class="rem-timer${venc ? ' disparado' : ''}">${txt}</div>
       <div class="rem-info">
-        <div style="font-weight:500;font-size:14px">SAS #${c.SAS} — ${c.TEL}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.NOM||'Sin nombre'} · ${badge(c.ESTADO)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace">Vence: ${new Date(c.REM_AT).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-weight:500;font-size:14px">SAS #${c.sas} — ${c.tel}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.nombre||'Sin nombre'} · ${badge(c.estado)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace">
+          Vence: ${new Date(c.rem_at).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'})}
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
-        <button class="action-btn" onclick="abrirModal(${i})">Editar</button>
-        <button class="action-btn del" onclick="quitarRem(${i})">Descartar</button>
+        <button class="action-btn" onclick="abrirModal(${idx})">Editar</button>
+        <button class="action-btn del" onclick="quitarRem(${idx})">Descartar</button>
       </div>
     </div>`;
   }).join('');
 }
 
-function dispararNotificacion(c){
-  const titulo=`⏰ Recordatorio — SAS #${c.SAS}`,cuerpo=`${c.NOM||c.TEL} · ${c.ESTADO||'Sin estado'}`;
-  mostrarToast(titulo,cuerpo);
-  if(Notification.permission==='granted'){try{new Notification(titulo,{body:cuerpo,requireInteraction:true,tag:'rem_'+c.SAS});}catch(e){}}
+// ================================================================
+// NOTIFICACIONES
+// ================================================================
+function dispararNotificacion(c) {
+  const titulo = `⏰ Recordatorio — SAS #${c.sas}`;
+  const cuerpo = `${c.nombre||c.tel} · ${c.estado||'Sin estado'}`;
+  mostrarToast(titulo, cuerpo);
+  if (Notification.permission === 'granted') {
+    try { new Notification(titulo, { body: cuerpo, requireInteraction: true, tag: 'rem_' + c.sas }); } catch(e) {}
+  }
 }
-function mostrarToast(t,s){document.getElementById('toast-title').textContent=t;document.getElementById('toast-sub').textContent=s;const el=document.getElementById('toast');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),6000);}
-function pedirPermiso(){if(!('Notification'in window)){alert('Este navegador no soporta notificaciones.');return;}Notification.requestPermission().then(p=>{if(p==='granted'){document.getElementById('btn-notif').textContent='🔔 Notificaciones activas';document.getElementById('notif-banner').classList.remove('visible');mostrarToast('✅ Notificaciones activadas','Te avisaremos cuando venza cada recordatorio.');}else{alert('Permiso denegado.');}});}
 
-async function quitarRem(i){
-  contactos[i].REM_ON=false;
+function mostrarToast(titulo, sub) {
+  document.getElementById('toast-title').textContent = titulo;
+  document.getElementById('toast-sub').textContent   = sub;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 6000);
+}
+
+function pedirPermiso() {
+  if (!('Notification' in window)) { alert('Este navegador no soporta notificaciones.'); return; }
+  Notification.requestPermission().then(p => {
+    if (p === 'granted') {
+      document.getElementById('btn-notif').textContent = '🔔 Notificaciones activas';
+      document.getElementById('notif-banner').classList.remove('visible');
+      mostrarToast('✅ Notificaciones activadas', 'Te avisaremos cuando venza cada recordatorio.');
+    } else {
+      alert('Permiso denegado. Habilitá las notificaciones en la configuración del navegador.');
+    }
+  });
+}
+
+async function quitarRem(idx) {
+  contactos[idx].rem_on = false;
   setSyncStatus('saving');
-  await sb.from('contactos').update({REM_ON:false}).eq('id',contactos[i].id);
+  await sb.from('contactos').update({ rem_on: false }).eq('id', contactos[idx].id);
   setSyncStatus('ok');
   renderRecordatorios();
 }
 
-function renderAlerta(){
-  const viejos=contactos.filter(c=>{const d=diasDesde(c.FECHA);return d!==null&&d>=3&&c.ESTADO!=='VENTA'&&c.ESTADO!=='RECHAZADO';});
-  document.getElementById('st-viejos').textContent=viejos.length;
-  const al=document.getElementById('alerta-dias');
-  if(viejos.length>0){
-    const por={};viejos.forEach(c=>{const d=diasDesde(c.FECHA);por[d]=(por[d]||0)+1;});
-    const res=Object.keys(por).sort((a,b)=>b-a).map(d=>`<strong>${por[d]} contacto${por[d]>1?'s':''} hace ${d} días</strong>`).join(' · ');
-    document.getElementById('alerta-dias-texto').innerHTML=`Sin respuesta: ${res}`;
+// ================================================================
+// ALERTA Y STATS
+// ================================================================
+function renderAlerta() {
+  const viejos = contactos.filter(c => {
+    const d = diasDesde(c.fecha);
+    return d !== null && d >= 3 && c.estado !== 'VENTA' && c.estado !== 'RECHAZADO';
+  });
+  document.getElementById('st-viejos').textContent = viejos.length;
+  const al = document.getElementById('alerta-dias');
+  if (viejos.length > 0) {
+    const por = {};
+    viejos.forEach(c => { const d = diasDesde(c.fecha); por[d] = (por[d]||0) + 1; });
+    const res = Object.keys(por).sort((a,b) => b-a)
+      .map(d => `<strong>${por[d]} contacto${por[d]>1?'s':''} hace ${d} días</strong>`).join(' · ');
+    document.getElementById('alerta-dias-texto').innerHTML = `Sin respuesta: ${res}`;
     al.classList.add('visible');
-  } else al.classList.remove('visible');
+  } else {
+    al.classList.remove('visible');
+  }
 }
 
-function renderStats(){
-  document.getElementById('st-total').textContent=contactos.length;
-  document.getElementById('st-co').textContent=contactos.filter(c=>(c.TIPO||'CO')==='CO').length;
-  document.getElementById('st-carga').textContent=contactos.filter(c=>c.TIPO==='CARGA').length;
-  document.getElementById('st-ventas').textContent=contactos.filter(c=>c.ESTADO==='VENTA').length;
-  document.getElementById('sidebar-resumen').innerHTML=contactos.length
-    ?`Total: <b style="color:var(--text)">${contactos.length}</b><br>CO: <b style="color:#60a5fa">${contactos.filter(c=>(c.TIPO||'CO')==='CO').length}</b><br>CARGA: <b style="color:var(--accent)">${contactos.filter(c=>c.TIPO==='CARGA').length}</b><br>Ventas: <b style="color:var(--success)">${contactos.filter(c=>c.ESTADO==='VENTA').length}</b>`
-    :'Sin contactos aún.';
+function renderStats() {
+  document.getElementById('st-total').textContent  = contactos.length;
+  document.getElementById('st-co').textContent     = contactos.filter(c => (c.tipo||'CO') === 'CO').length;
+  document.getElementById('st-carga').textContent  = contactos.filter(c => c.tipo === 'CARGA').length;
+  document.getElementById('st-ventas').textContent = contactos.filter(c => c.estado === 'VENTA').length;
+  document.getElementById('sidebar-resumen').innerHTML = contactos.length
+    ? `Total: <b style="color:var(--text)">${contactos.length}</b><br>
+       CO: <b style="color:#60a5fa">${contactos.filter(c=>(c.tipo||'CO')==='CO').length}</b><br>
+       CARGA: <b style="color:var(--accent)">${contactos.filter(c=>c.tipo==='CARGA').length}</b><br>
+       Ventas: <b style="color:var(--success)">${contactos.filter(c=>c.estado==='VENTA').length}</b>`
+    : 'Sin contactos aún.';
 }
 
-function renderAll(){renderTabla();renderRecordatorios();renderStats();renderAlerta();}
-
-function switchView(id,el){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');el.classList.add('active');
-  const isC=id==='contactos';
-  document.getElementById('stats-row').style.display=isC?'grid':'none';
-  document.getElementById('alerta-dias').style.display=isC?'':'none';
+function renderAll() {
+  renderTabla();
+  renderRecordatorios();
+  renderStats();
+  renderAlerta();
 }
 
-function actualizarPreview(){const val=parseInt(document.getElementById('f-rem-val').value)||1;const map={min:'minuto(s)',hr:'hora(s)',day:'día(s)'};document.getElementById('rem-preview-txt').textContent=`${val} ${map[document.getElementById('f-rem-unit').value]}`;}
+// ================================================================
+// NAVEGACIÓN
+// ================================================================
+function switchView(id, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  el.classList.add('active');
+  const isC = id === 'contactos';
+  document.getElementById('stats-row').style.display    = isC ? 'grid' : 'none';
+  document.getElementById('alerta-dias').style.display  = isC ? '' : 'none';
+}
 
-function abrirModal(idx=-1){
-  editIdx=idx;editId=idx>=0?contactos[idx].id:null;
-  const m=idx>=0?contactos[idx]:null;
-  document.getElementById('modal-titulo').textContent=idx>=0?'Editar contacto':'Nuevo contacto';
-  document.getElementById('f-sas').value=m?.SAS||'';
-  document.getElementById('f-tel').value=m?.TEL||'';
-  document.getElementById('f-nombre').value=m?.NOM||'';
-  document.getElementById('f-tipo').value=m?.TIPO||'CO';
-  document.getElementById('f-estado').value=m?.ESTADO||'';
-  document.getElementById('f-fecha').value=m?.FECHA||new Date().toISOString().slice(0,10);
-  document.getElementById('f-obs').value=m?.OBS||'';
-  document.getElementById('f-rem-on').checked=m?.REM_ON??true;
-  document.getElementById('f-rem-val').value=30;
-  document.getElementById('f-rem-unit').value='min';
+// ================================================================
+// MODAL
+// ================================================================
+function actualizarPreview() {
+  const val  = parseInt(document.getElementById('f-rem-val').value) || 1;
+  const unit = document.getElementById('f-rem-unit').value;
+  const map  = { min: 'minuto(s)', hr: 'hora(s)', day: 'día(s)' };
+  document.getElementById('rem-preview-txt').textContent = `${val} ${map[unit]}`;
+}
+
+function abrirModal(idx = -1) {
+  editIdx = idx;
+  editId  = idx >= 0 ? contactos[idx].id : null;
+  const c = idx >= 0 ? contactos[idx] : null;
+
+  document.getElementById('modal-titulo').textContent         = idx >= 0 ? 'Editar contacto' : 'Nuevo contacto';
+  document.getElementById('f-sas').value                      = c?.sas     || '';
+  document.getElementById('f-tel').value                      = c?.tel     || '';
+  document.getElementById('f-nombre').value                   = c?.nombre  || '';
+  document.getElementById('f-tipo').value                     = c?.tipo    || 'CO';
+  document.getElementById('f-estado').value                   = c?.estado  || '';
+  document.getElementById('f-fecha').value                    = c?.fecha   || new Date().toISOString().slice(0,10);
+  document.getElementById('f-obs').value                      = c?.obs     || '';
+  document.getElementById('f-rem-on').checked                 = c?.rem_on  ?? true;
+  document.getElementById('f-rem-val').value                  = 30;
+  document.getElementById('f-rem-unit').value                 = 'min';
   actualizarPreview();
   document.getElementById('modal-bg').classList.add('open');
 }
-function cerrarModal(){document.getElementById('modal-bg').classList.remove('open');}
-document.getElementById('f-rem-val').addEventListener('input',actualizarPreview);
-document.getElementById('f-rem-unit').addEventListener('change',actualizarPreview);
 
-async function guardarContacto(){
-  const sas=document.getElementById('f-sas').value.trim(),tel=document.getElementById('f-tel').value.trim();
-  if(!sas||!tel){alert('Número SAS y Teléfono son obligatorios.');return;}
-  const remOn=document.getElementById('f-rem-on').checked;
-  const remVal=parseInt(document.getElementById('f-rem-val').value)||30;
-  const remUnit=document.getElementById('f-rem-unit').value;
-  const msMap={min:60000,hr:3600000,day:86400000};
-  const remAt=editIdx>=0&&contactos[editIdx].REM_AT&&contactos[editIdx].REM_ON?contactos[editIdx].rem_at:(Date.now()+remVal*msMap[remUnit]);
-  const obj={sas:document.getElementById('f-sas').value.trim(),tel:document.getElementById('f-tel').value.trim(),nom:document.getElementById('f-nombre').value.trim(),tipo:document.getElementById('f-tipo').value,estado:document.getElementById('f-estado').value,fecha:document.getElementById('f-fecha').value,obs:document.getElementById('f-obs').value.trim(),rem_on:remOn,REM_AT:remAt};
+function cerrarModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+document.getElementById('f-rem-val').addEventListener('input',  actualizarPreview);
+document.getElementById('f-rem-unit').addEventListener('change', actualizarPreview);
+
+async function guardarContacto() {
+  const sas = document.getElementById('f-sas').value.trim();
+  const tel = document.getElementById('f-tel').value.trim();
+  if (!sas || !tel) { alert('Número SAS y Teléfono son obligatorios.'); return; }
+
+  const remOn  = document.getElementById('f-rem-on').checked;
+  const remVal = parseInt(document.getElementById('f-rem-val').value) || 30;
+  const remUnit = document.getElementById('f-rem-unit').value;
+  const msMap  = { min: 60000, hr: 3600000, day: 86400000 };
+  const remAt  = (editIdx >= 0 && contactos[editIdx].rem_at && contactos[editIdx].rem_on)
+                  ? contactos[editIdx].rem_at
+                  : Date.now() + remVal * msMap[remUnit];
+
+  // objeto con los mismos nombres que las columnas de Supabase
+  const obj = {
+    sas,
+    tel,
+    nombre:  document.getElementById('f-nombre').value.trim(),
+    tipo:    document.getElementById('f-tipo').value,
+    estado:  document.getElementById('f-estado').value,
+    fecha:   document.getElementById('f-fecha').value,
+    obs:     document.getElementById('f-obs').value.trim(),
+    rem_on:  remOn,
+    rem_at:  remAt
+  };
+
   setSyncStatus('saving');
-  if(editId){
-    const{error}=await sb.from('contactos').update(obj).eq('id',editId);
-    if(!error){contactos[editIdx]={...contactos[editIdx],...obj};setSyncStatus('ok');}
-    else{setSyncStatus('error');alert('Error al guardar: '+error.message);return;}
+  if (editId) {
+    const { error } = await sb.from('contactos').update(obj).eq('id', editId);
+    if (!error) { contactos[editIdx] = { ...contactos[editIdx], ...obj }; setSyncStatus('ok'); }
+    else { setSyncStatus('error'); alert('Error al guardar: ' + error.message); return; }
   } else {
-    const{data,error}=await sb.from('contactos').insert(obj).select().single();
-    if(!error){contactos.push(data);setSyncStatus('ok');}
-    else{setSyncStatus('error');alert('Error al guardar: '+error.message);return;}
+    const { data, error } = await sb.from('contactos').insert(obj).select().single();
+    if (!error) { contactos.push(data); setSyncStatus('ok'); }
+    else { setSyncStatus('error'); alert('Error al guardar: ' + error.message); return; }
   }
-  cerrarModal();renderAll();
+  cerrarModal();
+  renderAll();
 }
 
-async function eliminar(i){
-  if(!confirm('¿Eliminar este contacto?'))return;
-  const id=contactos[i].id;
+async function eliminar(idx) {
+  if (!confirm('¿Eliminar este contacto?')) return;
   setSyncStatus('saving');
-  await sb.from('contactos').delete().eq('id',id);
-  contactos.splice(i,1);
+  await sb.from('contactos').delete().eq('id', contactos[idx].id);
+  contactos.splice(idx, 1);
   setSyncStatus('ok');
   renderAll();
 }
 
-function exportarCSV(){
-  const header=['N° SAS','Tipo','Teléfono','Nombre','Fecha contacto','Días','Observación','Estado'];
-  const rows=contactos.map(c=>{const d=diasDesde(c.FECHA),et=etiquetaDias(d);const fFmt=c.FECHA?new Date(c.FECHA+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'';return[c.SAS,c.TIPO||'CO',c.TEL,c.NOM||'',fFmt,et.txt,c.OBS||'',c.ESTADO||''];});
-  const csv=[header,...rows].map(r=>r.map(x=>`"${(x+'').replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='seguimiento.csv';a.click();
+function exportarCSV() {
+  const header = ['N° SAS','Tipo','Teléfono','Nombre','Fecha contacto','Días','Observación','Estado'];
+  const rows = contactos.map(c => {
+    const d = diasDesde(c.fecha), et = etiquetaDias(d);
+    const fFmt = c.fecha ? new Date(c.fecha+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+    return [c.sas, c.tipo||'CO', c.tel, c.nombre||'', fFmt, et.txt, c.obs||'', c.estado||''];
+  });
+  const csv = [header, ...rows].map(r => r.map(x => `"${(x+'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'seguimiento.csv';
+  a.click();
 }
 
-// ===== INIT =====
-document.getElementById('header-fecha').textContent=new Date().toLocaleDateString('es-PY',{weekday:'long',day:'numeric',month:'long'});
-['ANALISIS DE BACK OFFICE','RIESGOS CREDITICIOS','JEFE COMERCIAL','STAFF LEGALES','ADJUNTAR DOCS ASEG.','CONFIRMAR','DEV BACK OFFICE','RECHAZADO','VENTA','DEV RIESGOS CREDITICIO','DEV STAFF LEGALES'].forEach(e=>{const o=document.createElement('option');o.value=e;o.textContent=e;document.getElementById('filtro-estado').appendChild(o);});
-if(Notification.permission==='granted')document.getElementById('btn-notif').textContent='🔔 Notificaciones activas';
+// ================================================================
+// INIT
+// ================================================================
+document.getElementById('header-fecha').textContent = new Date().toLocaleDateString('es-PY', { weekday:'long', day:'numeric', month:'long' });
+
+['ANALISIS DE BACK OFFICE','RIESGOS CREDITICIOS','JEFE COMERCIAL','STAFF LEGALES','ADJUNTAR DOCS ASEG.','CONFIRMAR','DEV BACK OFFICE','RECHAZADO','VENTA','DEV RIESGOS CREDITICIO','DEV STAFF LEGALES'].forEach(e => {
+  const o = document.createElement('option'); o.value = e; o.textContent = e;
+  document.getElementById('filtro-estado').appendChild(o);
+});
+
+if (Notification.permission === 'granted') document.getElementById('btn-notif').textContent = '🔔 Notificaciones activas';
 else document.getElementById('notif-banner').classList.add('visible');
 
-(async()=>{
-  try{
-    document.getElementById('loading-text').textContent='Cargando contactos...';
-    const{data,error}=await sb.from('contactos').select('*').order('created_at',{ascending:false});
-    if(error)throw error;
-    contactos=data||[];
+(async () => {
+  try {
+    document.getElementById('loading-text').textContent = 'Cargando contactos...';
+    const { data, error } = await sb.from('contactos').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    contactos = data || [];
     setSyncStatus('ok');
-  }catch(e){
+  } catch(e) {
     setSyncStatus('error');
-    document.getElementById('loading-text').textContent='Error de conexión. Usando datos locales...';
-    await new Promise(r=>setTimeout(r,1500));
+    document.getElementById('loading-text').textContent = 'Error de conexión...';
+    await new Promise(r => setTimeout(r, 1500));
   }
   document.getElementById('loading-screen').classList.add('hidden');
   renderAll();
-  setInterval(renderRecordatorios,1000);
-  if(!localStorage.getItem('tut_visto2')){const ov=document.getElementById('tutorial-overlay');ov.style.display='flex';buildDots();showStep(0);}
+  setInterval(renderRecordatorios, 1000);
+  if (!localStorage.getItem('tut_v3')) {
+    const ov = document.getElementById('tutorial-overlay');
+    ov.style.display = 'flex';
+    buildDots(); showStep(0);
+  }
 })();
 
+// ================================================================
 // TUTORIAL
-const STEPS=[
-  {title:'¡Datos guardados en la nube!',desc:'Tus contactos ahora viven en Supabase. Podés abrir esta app desde cualquier PC o navegador y los datos van a estar ahí.',h:'sync-indicator'},
-  {title:'Filtros combinados',desc:'Usá los 4 selectores juntos: tipo (CO/CARGA), estado y días. Si elegís "JEFE COMERCIAL" + "Hace 2 días", solo ves esas tareas exactas.',h:'filtros-bar'},
-  {title:'Cambiar CO / CARGA',desc:'El desplegable al lado del número SAS cambia el tipo directamente en la tabla. El cambio se guarda automáticamente en la nube.',h:null},
-  {title:'Recordatorios',desc:'Cada contacto tiene su propio timer. Cuando vence, recibís una notificación en el navegador.',h:'nav-recordatorios'},
-  {title:'¡Listo!',desc:'Todo se guarda automáticamente. Podés cerrar el navegador y cuando volvás, tus contactos van a estar acá.',h:'btn-nuevo'},
+// ================================================================
+const STEPS = [
+  { title:'¡Bienvenido a Seguimiento!', desc:'Tus datos se guardan en Supabase. Disponibles desde cualquier PC y navegador.', h:'sync-indicator' },
+  { title:'Filtros combinados', desc:'Usá los 4 selectores juntos: tipo, estado y días. Se combinan para mostrarte exactamente lo que buscás.', h:'filtros-bar' },
+  { title:'Cambiar CO / CARGA', desc:'El desplegable al lado del SAS cambia el tipo y se guarda automáticamente. Azul = CO, verde = CARGA.', h:null },
+  { title:'Recordatorios', desc:'Cada contacto tiene su propio timer configurable en minutos, horas o días.', h:'nav-recordatorios' },
+  { title:'¡Listo!', desc:'Todo se guarda automáticamente. Cerrá el navegador y cuando volvás, tus contactos van a estar acá.', h:'btn-nuevo' },
 ];
-let currentStep=0;
-function buildDots(){document.getElementById('tut-dots').innerHTML=STEPS.map((_,i)=>`<div class="tut-dot${i===0?' active':''}"></div>`).join('');}
-function showStep(n){const s=STEPS[n];document.getElementById('tut-step-label').textContent=`Paso ${n+1} de ${STEPS.length}`;document.getElementById('tut-title').textContent=s.title;document.getElementById('tut-desc').textContent=s.desc;document.querySelectorAll('.tut-dot').forEach((d,i)=>d.classList.toggle('active',i===n));document.querySelectorAll('.highlight-pulse').forEach(el=>el.classList.remove('highlight-pulse'));if(s.h){const el=document.getElementById(s.h);if(el)el.classList.add('highlight-pulse');}}
-function nextStep(){if(currentStep<STEPS.length-1){currentStep++;showStep(currentStep);}else{skipTutorial();}}
-function skipTutorial(){document.querySelectorAll('.highlight-pulse').forEach(el=>el.classList.remove('highlight-pulse'));const ov=document.getElementById('tutorial-overlay');ov.classList.add('hidden');setTimeout(()=>ov.style.display='none',300);localStorage.setItem('tut_visto2','1');}
-function restartTutorial(){currentStep=0;const ov=document.getElementById('tutorial-overlay');ov.style.display='flex';setTimeout(()=>ov.classList.remove('hidden'),10);buildDots();showStep(0);}
+let currentStep = 0;
+function buildDots() { document.getElementById('tut-dots').innerHTML = STEPS.map((_,i) => `<div class="tut-dot${i===0?' active':''}"></div>`).join(''); }
+function showStep(n) {
+  const s = STEPS[n];
+  document.getElementById('tut-step-label').textContent = `Paso ${n+1} de ${STEPS.length}`;
+  document.getElementById('tut-title').textContent = s.title;
+  document.getElementById('tut-desc').textContent  = s.desc;
+  document.querySelectorAll('.tut-dot').forEach((d,i) => d.classList.toggle('active', i===n));
+  document.querySelectorAll('.highlight-pulse').forEach(el => el.classList.remove('highlight-pulse'));
+  if (s.h) { const el = document.getElementById(s.h); if (el) el.classList.add('highlight-pulse'); }
+}
+function nextStep() { if (currentStep < STEPS.length-1) { currentStep++; showStep(currentStep); } else { skipTutorial(); } }
+function skipTutorial() {
+  document.querySelectorAll('.highlight-pulse').forEach(el => el.classList.remove('highlight-pulse'));
+  const ov = document.getElementById('tutorial-overlay');
+  ov.classList.add('hidden');
+  setTimeout(() => ov.style.display = 'none', 300);
+  localStorage.setItem('tut_v3','1');
+}
+function restartTutorial() {
+  currentStep = 0;
+  const ov = document.getElementById('tutorial-overlay');
+  ov.style.display = 'flex';
+  setTimeout(() => ov.classList.remove('hidden'), 10);
+  buildDots(); showStep(0);
+}
 </script>
 </body>
 </html>
