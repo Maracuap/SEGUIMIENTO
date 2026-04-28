@@ -377,9 +377,9 @@ function tipoSelect(tipo,i){
 }
 
 async function cambiarTipo(i,v){
-  contactos[i].TIPO=v;
+  contactos[i].tipo=v;
   setSyncStatus('saving');
-  await sb.from('contactos').update({TIPO:v}).eq('id',contactos[i].id);
+  await sb.from('contactos').update({tipo:v}).eq('id',contactos[i].id);
   setSyncStatus('ok');
   renderTabla();renderStats();
 }
@@ -391,10 +391,10 @@ function renderTabla(){
   const fEstado=document.getElementById('filtro-estado').value;
   const fDias=document.getElementById('filtro-dias').value;
   const filtered=contactos.filter(c=>{
-    const mb=!buscar||(c.SAS+'').toLowerCase().includes(buscar)||(c.TEL+'').includes(buscar)||(c.NOM||'').toLowerCase().includes(buscar);
-    const mt=!fTipo||(c.TIPO||'CO')===fTipo;
-    const me=!fEstado||c.ESTADO===fEstado;
-    const d=diasDesde(c.FECHA);
+    const mb=!buscar||(c.sas+'').toLowerCase().includes(buscar)||(c.tel+'').includes(buscar)||(c.nom||'').toLowerCase().includes(buscar);
+    const mt=!fTipo||(c.tipo||'CO')===fTipo;
+    const me=!fEstado||c.estado===fEstado;
+    const d=diasDesde(c.fecha);
     let md=true;
     if(fDias==='0')md=d===0;
     else if(fDias==='1')md=d===1;
@@ -407,17 +407,17 @@ function renderTabla(){
   const tb=document.getElementById('tabla-body');
   if(!filtered.length){tb.innerHTML=`<tr><td colspan="8" class="empty-state">${contactos.length?'Sin resultados para esos filtros.':'Ningún contacto todavía. Hacé clic en "+ Nuevo contacto".'}</td></tr>`;return;}
   tb.innerHTML=filtered.map(c=>{
-    const i=contactos.indexOf(c),d=diasDesde(c.FECHA),et=etiquetaDias(d);
-    const fFmt=c.FECHA?new Date(c.FECHA+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
-    const obs=(c.OBS||'').length>28?(c.OBS.slice(0,28)+'…'):c.OBS||'—';
+    const i=contactos.indexOf(c),d=diasDesde(c.fecha),et=etiquetaDias(d);
+    const fFmt=c.fecha?new Date(c.fecha+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+    const obs=(c.obs||'').length>28?(c.obs.slice(0,28)+'…'):c.obs||'—';
     return `<tr class="fade-in">
-      <td><div class="sas-cell">${tipoSelect(c.TIPO,i)}<span class="sas-link">#${c.SAS}</span></div></td>
-      <td><span class="tel-cell">${c.TEL}</span></td>
-      <td>${c.NOM||'—'}</td>
+      <td><div class="sas-cell">${tipoSelect(c.tipo,i)}<span class="sas-link">#${c.sas}</span></div></td>
+      <td><span class="tel-cell">${c.tel}</span></td>
+      <td>${c.nom||'—'}</td>
       <td style="font-size:12px;color:var(--muted)">${fFmt}</td>
-      <td>${badge(c.ESTADO)}</td>
+      <td>${badge(c.estado)}</td>
       <td><span class="dias-chip ${et.cls}">${et.txt}</span></td>
-      <td style="font-size:12px;color:var(--muted)" title="${c.OBS||''}">${obs}</td>
+      <td style="font-size:12px;color:var(--muted)" title="${c.obs||''}">${obs}</td>
       <td style="display:flex;gap:5px">
         <button class="action-btn" onclick="abrirModal(${i})">Editar</button>
         <button class="action-btn del" onclick="eliminar(${i})">×</button>
@@ -428,23 +428,23 @@ function renderTabla(){
 
 function renderRecordatorios(){
   const ahora=Date.now();
-  const activos=contactos.filter(c=>c.REM_ON&&c.REM_AT).sort((a,b)=>a.rem_at-b.rem_at);
-  const vencidos=activos.filter(c=>c.REM_AT<=ahora);
-  vencidos.forEach(c=>{const key=c.SAS+'_'+c.REM_AT;if(!disparados.has(key)){disparados.add(key);dispararNotificacion(c);}});
+  const activos=contactos.filter(c=>c.rem_on&&c.rem_at).sort((a,b)=>a.rem_at-b.rem_at);
+  const vencidos=activos.filter(c=>c.rem_at<=ahora);
+  vencidos.forEach(c=>{const key=c.sas+'_'+c.rem_at;if(!disparados.has(key)){disparados.add(key);dispararNotificacion(c);}});
   const badgeEl=document.getElementById('rem-badge');
   vencidos.length>0?(badgeEl.textContent=vencidos.length,badgeEl.classList.remove('hidden')):badgeEl.classList.add('hidden');
   const lista=document.getElementById('lista-rem');
   if(!activos.length){lista.innerHTML=`<div class="empty-state" style="padding:3rem">No hay recordatorios activos.</div>`;return;}
   lista.innerHTML=activos.map(c=>{
-    const i=contactos.indexOf(c),diff=c.REM_AT-ahora,venc=diff<=0;
+    const i=contactos.indexOf(c),diff=c.rem_at-ahora,venc=diff<=0;
     const abs=Math.abs(diff),mins=Math.floor(abs/60000),hrs=Math.floor(mins/60),minR=mins%60,secs=Math.floor((abs%60000)/1000);
     const txt=venc?'¡AHORA!':(hrs>0?`${hrs}h ${minR}m`:(mins>0?`${mins}m ${secs}s`:`${secs}s`));
     return `<div class="rem-card${venc?' disparado':''} fade-in">
       <div class="rem-timer${venc?' disparado':''}">${txt}</div>
       <div class="rem-info">
-        <div style="font-weight:500;font-size:14px">SAS #${c.SAS} — ${c.TEL}</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.NOM||'Sin nombre'} · ${badge(c.ESTADO)}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace">Vence: ${new Date(c.REM_AT).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'})}</div>
+        <div style="font-weight:500;font-size:14px">SAS #${c.sas} — ${c.tel}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${c.nom||'Sin nombre'} · ${badge(c.estado)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace">Vence: ${new Date(c.rem_at).toLocaleTimeString('es-PY',{hour:'2-digit',minute:'2-digit'})}</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <button class="action-btn" onclick="abrirModal(${i})">Editar</button>
@@ -455,9 +455,9 @@ function renderRecordatorios(){
 }
 
 function dispararNotificacion(c){
-  const titulo=`⏰ Recordatorio — SAS #${c.SAS}`,cuerpo=`${c.NOM||c.TEL} · ${c.ESTADO||'Sin estado'}`;
+  const titulo=`⏰ Recordatorio — SAS #${c.sas}`,cuerpo=`${c.nom||c.tel} · ${c.estado||'Sin estado'}`;
   mostrarToast(titulo,cuerpo);
-  if(Notification.permission==='granted'){try{new Notification(titulo,{body:cuerpo,requireInteraction:true,tag:'rem_'+c.SAS});}catch(e){}}
+  if(Notification.permission==='granted'){try{new Notification(titulo,{body:cuerpo,requireInteraction:true,tag:'rem_'+c.sas});}catch(e){}}
 }
 function mostrarToast(t,s){document.getElementById('toast-title').textContent=t;document.getElementById('toast-sub').textContent=s;const el=document.getElementById('toast');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),6000);}
 function pedirPermiso(){if(!('Notification'in window)){alert('Este navegador no soporta notificaciones.');return;}Notification.requestPermission().then(p=>{if(p==='granted'){document.getElementById('btn-notif').textContent='🔔 Notificaciones activas';document.getElementById('notif-banner').classList.remove('visible');mostrarToast('✅ Notificaciones activadas','Te avisaremos cuando venza cada recordatorio.');}else{alert('Permiso denegado.');}});}
@@ -465,17 +465,17 @@ function pedirPermiso(){if(!('Notification'in window)){alert('Este navegador no 
 async function quitarRem(i){
   contactos[i].rem_on=false;
   setSyncStatus('saving');
-  await sb.from('contactos').update({REM_ON:false}).eq('id',contactos[i].id);
+  await sb.from('contactos').update({rem_on:false}).eq('id',contactos[i].id);
   setSyncStatus('ok');
   renderRecordatorios();
 }
 
 function renderAlerta(){
-  const viejos=contactos.filter(c=>{const d=diasDesde(c.FECHA);return d!==null&&d>=3&&c.ESTADO!=='VENTA'&&c.ESTADO!=='RECHAZADO';});
+  const viejos=contactos.filter(c=>{const d=diasDesde(c.fecha);return d!==null&&d>=3&&c.estado!=='VENTA'&&c.estado!=='RECHAZADO';});
   document.getElementById('st-viejos').textContent=viejos.length;
   const al=document.getElementById('alerta-dias');
   if(viejos.length>0){
-    const por={};viejos.forEach(c=>{const d=diasDesde(c.FECHA);por[d]=(por[d]||0)+1;});
+    const por={};viejos.forEach(c=>{const d=diasDesde(c.fecha);por[d]=(por[d]||0)+1;});
     const res=Object.keys(por).sort((a,b)=>b-a).map(d=>`<strong>${por[d]} contacto${por[d]>1?'s':''} hace ${d} días</strong>`).join(' · ');
     document.getElementById('alerta-dias-texto').innerHTML=`Sin respuesta: ${res}`;
     al.classList.add('visible');
@@ -484,11 +484,11 @@ function renderAlerta(){
 
 function renderStats(){
   document.getElementById('st-total').textContent=contactos.length;
-  document.getElementById('st-co').textContent=contactos.filter(c=>(c.TIPO||'CO')==='CO').length;
-  document.getElementById('st-carga').textContent=contactos.filter(c=>c.TIPO==='CARGA').length;
-  document.getElementById('st-ventas').textContent=contactos.filter(c=>c.ESTADO==='VENTA').length;
+  document.getElementById('st-co').textContent=contactos.filter(c=>(c.tipo||'CO')==='CO').length;
+  document.getElementById('st-carga').textContent=contactos.filter(c=>c.tipo==='CARGA').length;
+  document.getElementById('st-ventas').textContent=contactos.filter(c=>c.estado==='VENTA').length;
   document.getElementById('sidebar-resumen').innerHTML=contactos.length
-    ?`Total: <b style="color:var(--text)">${contactos.length}</b><br>CO: <b style="color:#60a5fa">${contactos.filter(c=>(c.TIPO||'CO')==='CO').length}</b><br>CARGA: <b style="color:var(--accent)">${contactos.filter(c=>c.TIPO==='CARGA').length}</b><br>Ventas: <b style="color:var(--success)">${contactos.filter(c=>c.ESTADO==='VENTA').length}</b>`
+    ?`Total: <b style="color:var(--text)">${contactos.length}</b><br>CO: <b style="color:#60a5fa">${contactos.filter(c=>(c.tipo||'CO')==='CO').length}</b><br>CARGA: <b style="color:var(--accent)">${contactos.filter(c=>c.tipo==='CARGA').length}</b><br>Ventas: <b style="color:var(--success)">${contactos.filter(c=>c.estado==='VENTA').length}</b>`
     :'Sin contactos aún.';
 }
 
@@ -509,14 +509,14 @@ function abrirModal(idx=-1){
   editIdx=idx;editId=idx>=0?contactos[idx].id:null;
   const m=idx>=0?contactos[idx]:null;
   document.getElementById('modal-titulo').textContent=idx>=0?'Editar contacto':'Nuevo contacto';
-  document.getElementById('f-sas').value=m?.SAS||'';
-  document.getElementById('f-tel').value=m?.TEL||'';
-  document.getElementById('f-nombre').value=m?.NOM||'';
-  document.getElementById('f-tipo').value=m?.TIPO||'CO';
-  document.getElementById('f-estado').value=m?.ESTADO||'';
-  document.getElementById('f-fecha').value=m?.FECHA||new Date().toISOString().slice(0,10);
-  document.getElementById('f-obs').value=m?.OBS||'';
-  document.getElementById('f-rem-on').checked=m?.REM_ON??true;
+  document.getElementById('f-sas').value=m?.sas||'';
+  document.getElementById('f-tel').value=m?.tel||'';
+  document.getElementById('f-nombre').value=m?.nom||'';
+  document.getElementById('f-tipo').value=m?.tipo||'CO';
+  document.getElementById('f-estado').value=m?.estado||'';
+  document.getElementById('f-fecha').value=m?.fecha||new Date().toISOString().slice(0,10);
+  document.getElementById('f-obs').value=m?.obs||'';
+  document.getElementById('f-rem-on').checked=m?.rem_on??true;
   document.getElementById('f-rem-val').value=30;
   document.getElementById('f-rem-unit').value='min';
   actualizarPreview();
@@ -533,8 +533,8 @@ async function guardarContacto(){
   const remVal=parseInt(document.getElementById('f-rem-val').value)||30;
   const remUnit=document.getElementById('f-rem-unit').value;
   const msMap={min:60000,hr:3600000,day:86400000};
-  const remAt=editIdx>=0&&contactos[editIdx].REM_AT&&contactos[editIdx].REM_ON?contactos[editIdx].REM_AT:(Date.now()+remVal*msMap[remUnit]);
-  const obj={SAS:document.getElementById('f-sas').value.trim(),TEL:document.getElementById('f-tel').value.trim(),NOM:document.getElementById('f-nombre').value.trim(),TIPO:document.getElementById('f-tipo').value,ESTADO:document.getElementById('f-estado').value,FECHA:document.getElementById('f-fecha').value,OBS:document.getElementById('f-obs').value.trim(),REM_ON:remOn,REM_AT:remAt};
+  const remAt=editIdx>=0&&contactos[editIdx].rem_at&&contactos[editIdx].rem_on?contactos[editIdx].rem_at:(Date.now()+remVal*msMap[remUnit]);
+  const obj={sas:document.getElementById('f-sas').value.trim(),tel:document.getElementById('f-tel').value.trim(),nom:document.getElementById('f-nombre').value.trim(),tipo:document.getElementById('f-tipo').value,estado:document.getElementById('f-estado').value,fecha:document.getElementById('f-fecha').value,obs:document.getElementById('f-obs').value.trim(),rem_on:remOn,rem_at:remAt};
   setSyncStatus('saving');
   if(editId){
     const{error}=await sb.from('contactos').update(obj).eq('id',editId);
@@ -560,7 +560,7 @@ async function eliminar(i){
 
 function exportarCSV(){
   const header=['N° SAS','Tipo','Teléfono','Nombre','Fecha contacto','Días','Observación','Estado'];
-  const rows=contactos.map(c=>{const d=diasDesde(c.FECHA),et=etiquetaDias(d);const fFmt=c.FECHA?new Date(c.FECHA+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'';return[c.SAS,c.TIPO||'CO',c.TEL,c.NOM||'',fFmt,et.txt,c.OBS||'',c.ESTADO||''];});
+  const rows=contactos.map(c=>{const d=diasDesde(c.fecha),et=etiquetaDias(d);const fFmt=c.fecha?new Date(c.fecha+'T00:00:00').toLocaleDateString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}):'';return[c.sas,c.tipo||'CO',c.tel,c.nom||'',fFmt,et.txt,c.obs||'',c.estado||''];});
   const csv=[header,...rows].map(r=>r.map(x=>`"${(x+'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='seguimiento.csv';a.click();
 }
