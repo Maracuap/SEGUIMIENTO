@@ -370,7 +370,7 @@ function etiquetaDias(n){
 function tipoSelect(tipo,i){
   const t=tipo==='CARGA'?'CARGA':'CO';
   const cls=t==='CARGA'?'tipo-carga':'tipo-co';
-  return `<select class="tipo-select ${cls}" onchange="cambiarTipo(${i},this.value)">
+  return `<select class="tipo-select ${cls}" onchange="cambiarTipo(${i},this.value);this.className='tipo-select '+(this.value==='CARGA'?'tipo-carga':'tipo-co')">
     <option value="CO" ${t==='CO'?'selected':''}>CO</option>
     <option value="CARGA" ${t==='CARGA'?'selected':''}>CARGA</option>
   </select>`;
