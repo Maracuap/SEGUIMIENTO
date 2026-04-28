@@ -534,7 +534,7 @@ async function guardarContacto(){
   const remUnit=document.getElementById('f-rem-unit').value;
   const msMap={min:60000,hr:3600000,day:86400000};
   const remAt=editIdx>=0&&contactos[editIdx].REM_AT&&contactos[editIdx].REM_ON?contactos[editIdx].REM_AT:(Date.now()+remVal*msMap[remUnit]);
-  const obj={SAS:document.getElementById('f-sas').value.trim(),TEL:document.getElementById('f-tel').value.trim(),NOM:document.getElementById('f-nombre').value.trim(),TIPO:document.getElementById('f-tipo').value,estado:document.getElementById('f-estado').value,FECHA:document.getElementById('f-fecha').value,OBS:document.getElementById('f-obs').value.trim(),REM_ON:remOn,REM_AT:remAt};
+  const obj={sas:document.getElementById('f-sas').value.trim(),tel:document.getElementById('f-tel').value.trim(),nom:document.getElementById('f-nombre').value.trim(),tipo:document.getElementById('f-tipo').value,estado:document.getElementById('f-estado').value,fecha:document.getElementById('f-fecha').value,obs:document.getElementById('f-obs').value.trim(),rem_on:remOn,REM_AT:remAt};
   setSyncStatus('saving');
   if(editId){
     const{error}=await sb.from('contactos').update(obj).eq('id',editId);
