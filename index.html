@@ -533,7 +533,7 @@ async function guardarContacto(){
   const remVal=parseInt(document.getElementById('f-rem-val').value)||30;
   const remUnit=document.getElementById('f-rem-unit').value;
   const msMap={min:60000,hr:3600000,day:86400000};
-  const remAt=editIdx>=0&&contactos[editIdx].REM_AT&&contactos[editIdx].REM_ON?contactos[editIdx].REM_AT:(Date.now()+remVal*msMap[remUnit]);
+  const remAt=editIdx>=0&&contactos[editIdx].REM_AT&&contactos[editIdx].REM_ON?contactos[editIdx].rem_at:(Date.now()+remVal*msMap[remUnit]);
   const obj={sas:document.getElementById('f-sas').value.trim(),tel:document.getElementById('f-tel').value.trim(),nom:document.getElementById('f-nombre').value.trim(),tipo:document.getElementById('f-tipo').value,estado:document.getElementById('f-estado').value,fecha:document.getElementById('f-fecha').value,obs:document.getElementById('f-obs').value.trim(),rem_on:remOn,REM_AT:remAt};
   setSyncStatus('saving');
   if(editId){
