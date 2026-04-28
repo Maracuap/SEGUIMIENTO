@@ -377,7 +377,7 @@ function tipoSelect(tipo,i){
 }
 
 async function cambiarTipo(i,v){
-  contactos[i].tipo=v;
+  contactos[i].TIPO=v;
   setSyncStatus('saving');
   await sb.from('contactos').update({TIPO:v}).eq('id',contactos[i].id);
   setSyncStatus('ok');
@@ -509,14 +509,14 @@ function abrirModal(idx=-1){
   editIdx=idx;editId=idx>=0?contactos[idx].id:null;
   const m=idx>=0?contactos[idx]:null;
   document.getElementById('modal-titulo').textContent=idx>=0?'Editar contacto':'Nuevo contacto';
-  document.getElementById('f-sas').value=m?.sas||'';
-  document.getElementById('f-tel').value=m?.tel||'';
-  document.getElementById('f-nombre').value=m?.nombre||'';
-  document.getElementById('f-tipo').value=m?.tipo||'CO';
-  document.getElementById('f-estado').value=m?.estado||'';
-  document.getElementById('f-fecha').value=m?.fecha||new Date().toISOString().slice(0,10);
-  document.getElementById('f-obs').value=m?.obs||'';
-  document.getElementById('f-rem-on').checked=m?.rem_on??true;
+  document.getElementById('f-sas').value=m?.SAS||'';
+  document.getElementById('f-tel').value=m?.TEL||'';
+  document.getElementById('f-nombre').value=m?.NOM||'';
+  document.getElementById('f-tipo').value=m?.TIPO||'CO';
+  document.getElementById('f-estado').value=m?.ESTADO||'';
+  document.getElementById('f-fecha').value=m?.FECHA||new Date().toISOString().slice(0,10);
+  document.getElementById('f-obs').value=m?.OBS||'';
+  document.getElementById('f-rem-on').checked=m?.REM_ON??true;
   document.getElementById('f-rem-val').value=30;
   document.getElementById('f-rem-unit').value='min';
   actualizarPreview();
