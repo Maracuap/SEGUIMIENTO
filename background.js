@@ -1,105 +1,134 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// background.js — Service Worker (MV3)
-// Corre en el contexto de la extensión: sin restricciones de CSP.
-// Maneja: cola de registros, reintentos, fetch a Google Apps Script.
-// ═══════════════════════════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbyjVOBUQY6zKmtAHMqshp_VuwiO9KlMD-CN4-f4ui6NsYHonjxgXt0PM09TgaQv5fTjEw/exec';
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
 
-const APP_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPPWk9YXjLf4WiQlwkXVQtrtuYAD72MCuf1docjnEIwDNqobfot50z1-gfOWHh1dbe/exec";
+let recordQueue = [];
+let isProcessingQueue = false;
+let queueRetryCount = {};
 
-let cola = [];
-let enviando = false;
-let estadisticas = {
-  registros_enviados: 0,
-  registros_fallidos: 0,
-  intentos_totales: 0
-};
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'guardar') {
+    enqueueRecord(message.data, sendResponse);
+  } else if (message.action === 'getStats') {
+    getStats(sendResponse);
+  }
+  return true;
+});
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROCESADOR DE COLA
-// ═══════════════════════════════════════════════════════════════════════════
-async function procesarCola() {
-  if (enviando || cola.length === 0) return;
-  enviando = true;
+function enqueueRecord(data, sendResponse) {
+  const record = {
+    id: `${Date.now()}-${Math.random()}`,
+    fecha: new Date().toLocaleString('es-AR'),
+    nombre: data.nombre || '',
+    telefono: data.telefono || '',
+    estado: data.estado || '',
+    comentario: data.comentario || '',
+    operador: data.operador || 'Sistema',
+    timestamp: Date.now()
+  };
 
-  while (cola.length > 0) {
-    const item = cola[0];
-    try {
-      estadisticas.intentos_totales++;
+  recordQueue.push(record);
+  processQueue();
 
-      const respuesta = await fetch(APP_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item.datos)
-      });
+  sendResponse({ success: true, queued: recordQueue.length });
+}
 
-      if (!respuesta.ok) {
-        throw new Error(`HTTP ${respuesta.status}`);
-      }
+async function processQueue() {
+  if (isProcessingQueue || recordQueue.length === 0) return;
 
-      cola.shift();
-      estadisticas.registros_enviados++;
-      item.resolve({ ok: true, mensaje: "Registrado en Google Sheets" });
+  isProcessingQueue = true;
 
-    } catch (error) {
-      item.intentos = (item.intentos || 0) + 1;
+  while (recordQueue.length > 0) {
+    const record = recordQueue[0];
+    const recordId = record.id;
+    const attempts = queueRetryCount[recordId] || 0;
 
-      if (item.intentos >= 3) {
-        cola.shift();
-        estadisticas.registros_fallidos++;
-        item.resolve({
-          ok: false,
-          error: `Falló tras 3 intentos: ${error.message}`
-        });
-      } else {
-        await new Promise(r => setTimeout(r, 2000));
-      }
+    const success = await sendToAPI(record, attempts);
+
+    if (success) {
+      recordQueue.shift();
+      delete queueRetryCount[recordId];
+      await incrementStat(record.estado);
+    } else if (attempts < MAX_RETRIES) {
+      queueRetryCount[recordId] = attempts + 1;
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (attempts + 1)));
+    } else {
+      recordQueue.shift();
+      delete queueRetryCount[recordId];
+      await incrementStat('errores');
     }
   }
 
-  enviando = false;
+  isProcessingQueue = false;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ESCUCHADOR DE MENSAJES
-// ═══════════════════════════════════════════════════════════════════════════
-chrome.runtime.onMessage.addListener((mensaje, sender, responder) => {
-  if (mensaje.action === "guardar") {
-    const datos = {
-      ...mensaje.datos,
-      fecha: mensaje.datos.fecha || new Date().toISOString(),
-      timestamp: Date.now()
-    };
-
-    cola.push({
-      datos: datos,
-      resolve: responder,
-      intentos: 0
+async function sendToAPI(record, attempt = 0) {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(record)
     });
 
-    procesarCola();
     return true;
+  } catch (error) {
+    console.error(`❌ Error enviando registro (intento ${attempt + 1}/${MAX_RETRIES}):`, error);
+    return false;
+  }
+}
+
+async function incrementStat(estado) {
+  const stats = await getStorageStats();
+
+  if (estado === 'Enviado seguimiento') {
+    stats.enviados = (stats.enviados || 0) + 1;
+  } else if (estado === 'Anclado (respondió)') {
+    stats.anclados = (stats.anclados || 0) + 1;
+  } else if (estado === 'Cerrado') {
+    stats.cerrados = (stats.cerrados || 0) + 1;
+  } else if (estado === 'errores') {
+    stats.errores = (stats.errores || 0) + 1;
   }
 
-  if (mensaje.action === "stats") {
-    responder({
-      ok: true,
-      stats: estadisticas,
-      cola_pendiente: cola.length
+  await chrome.storage.local.set({ stats });
+}
+
+async function getStorageStats() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get('stats', (result) => {
+      resolve(result.stats || {
+        enviados: 0,
+        anclados: 0,
+        cerrados: 0,
+        errores: 0
+      });
     });
-    return true;
-  }
+  });
+}
 
-  if (mensaje.action === "estado_extension") {
-    responder({
-      ok: true,
-      activo: true,
-      version: "1.0.0",
-      endpoint: APP_SCRIPT_URL
+function getStats(sendResponse) {
+  chrome.storage.local.get('stats', (result) => {
+    sendResponse(result.stats || {
+      enviados: 0,
+      anclados: 0,
+      cerrados: 0,
+      errores: 0
+    });
+  });
+}
+
+chrome.storage.local.get('stats', (result) => {
+  if (!result.stats) {
+    chrome.storage.local.set({
+      stats: {
+        enviados: 0,
+        anclados: 0,
+        cerrados: 0,
+        errores: 0
+      }
     });
   }
 });
-
-// ═══════════════════════════════════════════════════════════════════════════
-// INICIALIZACIÓN
-// ═══════════════════════════════════════════════════════════════════════════
-console.log("[uBot Background] Service Worker iniciado — listo para recibir registros");

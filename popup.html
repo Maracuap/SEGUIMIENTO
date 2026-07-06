@@ -3,83 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>uContact Bot v10</title>
+  <title>uContact Bot v2</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-title">🤖 uContact Bot v10</div>
-    <div id="estadoIndicador" class="estado-indicador inactivo">
-      <span class="dot"></span>
-      <span class="texto">INACTIVO</span>
-    </div>
-  </div>
-
-  <!-- MAIN CONTENT -->
   <div class="container">
+    <div class="header">
+      <h1>uContact Bot</h1>
+      <span class="version">v2.0</span>
+    </div>
 
-    <!-- CICLO AUTOMÁTICO -->
-    <section class="seccion">
-      <div class="seccion-titulo">⚙️ CICLO AUTOMÁTICO</div>
-      
-      <div class="input-group">
-        <label for="cicloHoras">Cada:</label>
-        <select id="cicloHoras">
-          <option value="0.5">30 minutos</option>
-          <option value="1">1 hora</option>
-          <option value="2" selected>2 horas</option>
-          <option value="3">3 horas</option>
-          <option value="4">4 horas</option>
-          <option value="6">6 horas</option>
+    <div class="alert alert-info" id="connectionAlert" style="display: none;">
+      ⚠️ Abre uContact para usar el bot
+    </div>
+
+    <div class="controls">
+      <button id="startBtn" class="btn btn-start">▶ Iniciar</button>
+      <button id="stopBtn" class="btn btn-stop" disabled>⏹ Detener</button>
+    </div>
+
+    <div class="settings">
+      <div class="setting-group">
+        <label for="interval">Intervalo:</label>
+        <select id="interval">
+          <option value="1">Cada 1h</option>
+          <option value="2">Cada 2h</option>
+          <option value="3">Cada 3h</option>
+          <option value="4">Cada 4h</option>
         </select>
       </div>
 
-      <div class="button-group">
-        <button id="btnIniciar" class="btn btn-iniciar">▶ INICIAR</button>
-        <button id="btnDetener" class="btn btn-detener" disabled>■ DETENER</button>
+      <div class="setting-group">
+        <label for="operador">Operador:</label>
+        <input type="text" id="operador" placeholder="Tu nombre" maxlength="50">
       </div>
-    </section>
+    </div>
 
-    <!-- ESTADÍSTICAS -->
-    <section class="seccion">
-      <div class="seccion-titulo">📊 ESTADÍSTICAS</div>
-      
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-valor" id="statEnviados">0</div>
-          <div class="stat-label">Enviados</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-valor" id="statAnclados">0</div>
-          <div class="stat-label">Anclados</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-valor" id="statErrores">0</div>
-          <div class="stat-label">Errores</div>
-        </div>
+    <div class="status-box">
+      <div class="status-line">
+        <span class="status-label">Estado:</span>
+        <span class="status-value" id="status">Detenido</span>
       </div>
+      <div class="status-line" id="processingLine" style="display: none;">
+        <span class="status-label">Procesando:</span>
+        <span class="processing-indicator">●●●</span>
+      </div>
+    </div>
 
-      <div class="ciclos-info" id="ciclosInfo"></div>
-    </section>
+    <div class="stats">
+      <div class="stat-item">
+        <span class="stat-label">Enviados</span>
+        <span class="stat-value" id="enviados">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Anclados</span>
+        <span class="stat-value" id="anclados">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Cerrados</span>
+        <span class="stat-value" id="cerrados">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Errores</span>
+        <span class="stat-value" id="errores">0</span>
+      </div>
+    </div>
 
-    <!-- ACCIONES MANUALES -->
-    <section class="seccion">
-      <div class="seccion-titulo">🎮 ACCIONES MANUALES</div>
-      
-      <button id="btnEscanear" class="btn btn-escanear">🔍 ESCANEAR AHORA</button>
-    </section>
-
-    <!-- PIE -->
-    <footer class="footer">
-      <small>v1.0.0 • uContact Bot</small>
-      <button id="btnReset" class="btn-reset" title="Resetear estadísticas">🔄</button>
-    </footer>
-
+    <div class="footer">
+      <small>v2.0 | Registros guardados en Google Sheets</small>
+    </div>
   </div>
 
   <script src="popup.js"></script>
-
 </body>
 </html>
