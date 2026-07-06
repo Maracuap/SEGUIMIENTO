@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uContact Bot v10</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-title">🤖 uContact Bot v10</div>
+    <div id="estadoIndicador" class="estado-indicador inactivo">
+      <span class="dot"></span>
+      <span class="texto">INACTIVO</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="container">
+
+    <!-- CICLO AUTOMÁTICO -->
+    <section class="seccion">
+      <div class="seccion-titulo">⚙️ CICLO AUTOMÁTICO</div>
+      
+      <div class="input-group">
+        <label for="cicloHoras">Cada:</label>
+        <select id="cicloHoras">
+          <option value="0.5">30 minutos</option>
+          <option value="1">1 hora</option>
+          <option value="2" selected>2 horas</option>
+          <option value="3">3 horas</option>
+          <option value="4">4 horas</option>
+          <option value="6">6 horas</option>
+        </select>
+      </div>
+
+      <div class="button-group">
+        <button id="btnIniciar" class="btn btn-iniciar">▶ INICIAR</button>
+        <button id="btnDetener" class="btn btn-detener" disabled>■ DETENER</button>
+      </div>
+    </section>
+
+    <!-- ESTADÍSTICAS -->
+    <section class="seccion">
+      <div class="seccion-titulo">📊 ESTADÍSTICAS</div>
+      
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-valor" id="statEnviados">0</div>
+          <div class="stat-label">Enviados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-valor" id="statAnclados">0</div>
+          <div class="stat-label">Anclados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-valor" id="statErrores">0</div>
+          <div class="stat-label">Errores</div>
+        </div>
+      </div>
+
+      <div class="ciclos-info" id="ciclosInfo"></div>
+    </section>
+
+    <!-- ACCIONES MANUALES -->
+    <section class="seccion">
+      <div class="seccion-titulo">🎮 ACCIONES MANUALES</div>
+      
+      <button id="btnEscanear" class="btn btn-escanear">🔍 ESCANEAR AHORA</button>
+    </section>
+
+    <!-- PIE -->
+    <footer class="footer">
+      <small>v1.0.0 • uContact Bot</small>
+      <button id="btnReset" class="btn-reset" title="Resetear estadísticas">🔄</button>
+    </footer>
+
+  </div>
+
+  <script src="popup.js"></script>
+
+</body>
+</html>

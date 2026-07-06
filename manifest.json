@@ -1,0 +1,34 @@
+{
+  "manifest_version": 3,
+  "name": "uContact Bot v10",
+  "version": "1.0.0",
+  "description": "Automatiza seguimiento de chats en uContact: envía plantillas a sin-respuesta, ancla respondidos, registra en Google Sheets",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+
+  "host_permissions": [
+    "https://fintech.ucontactcloud.com/*",
+    "https://script.google.com/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://fintech.ucontactcloud.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "uContact Bot v10"
+  }
+}
